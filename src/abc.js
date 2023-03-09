@@ -1,0 +1,205 @@
+
+import React, { useState, useEffect, useRef } from 'react';
+import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
+import { CSVLink } from 'react-csv';
+
+import { PDFDownloadLink, Document, Page, Text } from '@react-pdf/renderer';
+import { useExportData } from "react-table-plugins";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import html2canvas from "html2canvas";
+
+import { useTable } from 'react-table';
+function App() {
+  const [csvData, setCsvData] = useState([]);
+  const [data, setData] = useState([]);
+
+  const [filterShow, setFilterShow] = useState(false);
+
+  const fetchData = async () => {
+
+    try {
+      const response = await axios.get(`https://api.devsrvofads.com/api/countries`)
+      console.log(response)
+      console.log(response.data.data)
+      setData(response.data.data)
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  // setData(data);
+
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: 'id',
+        accessor: 'id'
+      },
+      {
+        Header: 'label',
+        accessor: 'label'
+      },
+      {
+        Header: 'code',
+        accessor: 'code'
+      }
+    ],
+    []
+  );
+
+  const column = [
+    {
+      Header: 'id',
+      accessor: 'id'
+    },
+    {
+      Header: 'label',
+      accessor: 'label'
+    },
+    {
+      Header: 'code',
+      accessor: 'code'
+    }
+  ];
+
+  const handleExport = () => {
+    setCsvData(data);
+  };
+
+  const tableInstance = useTable({ columns, data });
+
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, allColumns } = tableInstance;
+  const tableRef = useRef();
+
+  const {
+
+    // for export
+    exportData
+  } = useTable(
+    {
+      columns,
+      data,
+      getExportFileBlob
+
+    },
+
+    useExportData
+  );
+
+
+  // const exportPDF = () => {
+  //   html2canvas(tableRef.current).then((canvas) => {
+  //     const imgData = canvas.toDataURL("image/png");
+  //     const pdf = new jsPDF("l", "mm", "a4");
+  //     const imgWidth = 210;
+  //     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  //     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  //     pdf.save("table.pdf");
+  //   });
+  // };
+
+  function getExportFileBlob({ columns, data, fileType, fileName }) {
+    if (fileType === "pdf") {
+      console.log("col", columns)
+      const headerNames = columns
+        .filter((c) => c.Header != "Action")
+        .map((column) => column.exportValue);
+
+      const doc = new jsPDF();
+      doc.autoTable({
+        head: [headerNames],
+        body: data,
+        styles: {
+          minCellHeight: 9,
+          halign: "left",
+          valign: "center",
+          fontSize: 11
+        }
+      });
+      doc.save(`aa.pdf`);
+    }
+    return false;
+  };
+  return (
+    <div className="App">
+
+      {filterShow && (
+        <div className="filter_body flex rounded-md w-40">
+          {allColumns.map((column) => (
+            <div key={column.id} className="px-3 py-3">
+              <label>
+                <input type="checkbox" {...column.getToggleHiddenProps()} />
+                <span className="px-2 py-10"> {column.Header} </span>
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
+      <button onClick={() => {
+        exportData("pdf", true);
+      }}>Export to PDF</button>
+      <table {...getTableProps()} ref={tableRef}>
+        <thead>
+          {headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {rows.map((row, i) => {
+            prepareRow(row);
+            return (
+              <tr {...row.getRowProps()}>
+                {row.cells.map(cell => {
+                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                })}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <button className='border bg-green-600' onClick={handleExport}>
+        <CSVLink data={csvData} filename="Countries.csv">
+          <div className='flex p-2 text-white text-center transform motion-safe:hover:scale-105'>
+
+            <div className='text-xl'>
+              Export
+            </div>
+          </div>
+        </CSVLink>
+      </button>
+      <PDFDownloadLink
+        document={
+          <Document>
+            <Page>
+              <ReactTable
+                data={csvData}
+                columns={column}
+                defaultPageSize={10}
+              // className="-striped -highlight"
+              />
+            </Page>
+          </Document>
+        }
+        fileName="table.pdf"
+      >
+        {({ blob, url, loading, error }) =>
+          loading ? 'Loading document...' : 'Download PDF'
+        }
+      </PDFDownloadLink>
+    </div>
+  );
+}
+
+export default App;

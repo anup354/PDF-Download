@@ -1,0 +1,185 @@
+// import logo from './logo.svg';
+// import './App.css';
+// import React, { useMemo } from 'react';
+// import MaterialTable from 'material-react-table';
+// import { useTable } from 'react-table';
+// import { exportCSV } from 'csv-export';
+
+
+// const data = [
+//   {
+//     name: {
+//       firstName: 'John',
+//       lastName: 'Doe',
+//     },
+//     address: '261 Erdman Ford',
+//     city: 'East Daphne',
+//     state: 'Kentucky',
+//   },
+//   {
+//     name: {
+//       firstName: 'Jane',
+//       lastName: 'Doe',
+//     },
+//     address: '769 Dominic Grove',
+//     city: 'Columbus',
+//     state: 'Ohio',
+//   },
+//   {
+//     name: {
+//       firstName: 'Joe',
+//       lastName: 'Doe',
+//     },
+//     address: '566 Brakus Inlet',
+//     city: 'South Linda',
+//     state: 'West Virginia',
+//   },
+//   {
+//     name: {
+//       firstName: 'Kevin',
+//       lastName: 'Vandy',
+//     },
+//     address: '722 Emie Stream',
+//     city: 'Lincoln',
+//     state: 'Nebraska',
+//   },
+//   {
+//     name: {
+//       firstName: 'Joshua',
+//       lastName: 'Rolluffs',
+//     },
+//     address: '32188 Larkin Turnpike',
+//     city: 'Charleston',
+//     state: 'South Carolina',
+//   },
+// ];
+import React, { useState, useEffect } from 'react';
+import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
+import { CSVLink } from 'react-csv';
+import axios from 'axios';
+import { PDFDownloadLink, Document, Page, Text } from '@react-pdf/renderer';
+function App() {
+  const [csvData, setCsvData] = useState([]);
+  const [data, setData] = useState([]);
+  const fetchData = async () => {
+
+    try {
+      const response = await axios.get(`https://api.devsrvofads.com/api/countries`)
+      console.log(response)
+      console.log(response.data.data)
+      setData(response.data.data)
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  // setData(data);
+
+
+  useEffect(() => {
+
+    fetchData();
+  }, []);
+
+  const columns = [
+    {
+      Header: 'id',
+      accessor: 'id'
+    },
+    {
+      Header: 'label',
+      accessor: 'label'
+    },
+    {
+      Header: 'code',
+      accessor: 'code'
+    }
+  ];
+
+  // const csvData = data.map(item => ({
+  //   Name: item.name,
+  //   Age: item.age,
+  //   Email: item.email
+  // }));
+  const handleExport = () => {
+    setCsvData(data);
+  };
+  // const columns = useMemo(
+  //   () => [
+  //     {
+  //       accessorKey: 'name.firstName', //access nested data with dot notation
+  //       header: 'First Name',
+  //     },
+  //     {
+  //       accessorKey: 'name.lastName',
+  //       header: 'Last Name',
+  //     },
+  //     {
+  //       accessorKey: 'address', //normal accessorKey
+  //       header: 'Address',
+  //     },
+  //     {
+  //       accessorKey: 'city',
+  //       header: 'City',
+  //     },
+  //     {
+  //       accessorKey: 'state',
+  //       header: 'State',
+  //     },
+  //   ],
+  //   [],
+  // );
+
+  return (
+    <div className="App">
+      <h1>Hi</h1>
+      {/* //MaterialTable */}
+      {/* <MaterialTable columns={columns} data={data} 
+      options={{
+        exportButton: true,
+      }}/>; */}
+      <div>
+        <ReactTable
+          data={data}
+          columns={columns}
+          defaultPageSize={10}
+          className="-striped -highlight"
+        />
+        {/* <CSVLink data={csvData}>Export to CSV</CSVLink> */}
+        <button className='border bg-green-600' onClick={handleExport}>
+          <CSVLink data={csvData} filename="Countries.csv">
+            <div className='flex p-2 text-white text-center transform motion-safe:hover:scale-105'>
+
+              <div className='text-xl'>
+                Export
+              </div>
+            </div>
+          </CSVLink>
+        </button>
+        <PDFDownloadLink
+          document={
+            <Document>
+              <Page>
+                <ReactTable
+                  data={data}
+                  columns={columns}
+                  defaultPageSize={10}
+                  className="-striped -highlight"
+                />
+              </Page>
+            </Document>
+          }
+          fileName="table.pdf"
+        >
+          {({ blob, url, loading, error }) =>
+            loading ? 'Loading document...' : 'Download PDF'
+          }
+        </PDFDownloadLink>
+      </div>
+    </div>
+  );
+}
+
+export default App;

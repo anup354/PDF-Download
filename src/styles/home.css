@@ -1,0 +1,33 @@
+.header {
+  position: relative;
+  /* overflow: scroll; */
+  white-space: nowrap;
+}
+
+
+.filter_section {
+  position: absolute;
+  right: 30px;
+  top: 30px;
+  color: white;
+  display: flex;
+  z-index: 50;
+}
+.filter_body {
+  color: white;
+  position: absolute;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  top: 4em;
+  background-color: #55608f;
+  width: 10em;
+  z-index: 50;
+}
+.download {
+  padding: 12px 10px 8px 10px;
+  color: white;
+  background-color: #55608f;
+  width: 10em;
+  height: 3em;
+}
